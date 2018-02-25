@@ -1,2 +1,0 @@
-# dp_stock
-None
