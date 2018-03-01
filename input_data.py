@@ -31,7 +31,7 @@ original_B, original_Y = ps.transform(original_A)
 ps = PastSampler(NPS, NFS, sliding_window=True)
 validate_B, validate_Y = ps.transform(A)
 validate_count = (int(validate_B.shape[0] * 0.2)) * NFS
-validate_B_start = int(validate_B.shape[0] * 0.2)
+validate_B_start = validate_B.shape[0] - int(validate_B.shape[0] * 0.2)
 print(validate_B_start)
 print(validate_count)
 
@@ -84,7 +84,7 @@ original_B, original_Y = ps.transform(original_A)
 ps = PastSampler(NPS, NFS, sliding_window=True)
 validate_B, validate_Y = ps.transform(A)
 validate_count = (int(validate_B.shape[0] * 0.2)) * NFS
-validate_B_start = int(validate_B.shape[0] * 0.2)
+validate_B_start =  validate_B.shape[0] - int(validate_B.shape[0] * 0.2)
 print(validate_B_start)
 
 file_name = 'data/index.h5'
