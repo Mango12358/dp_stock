@@ -4,9 +4,9 @@ import sys
 # 获取连接备用
 cons = ts.get_apis()
 
-freq = '5min'
+freq = '60min'
 start_date = '2017-03-31'
-end_date = '2018-02-11'
+end_date = '2018-02-27'
 ma = [5, 10, 20, 30, 60]
 
 
