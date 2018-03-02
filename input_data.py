@@ -7,6 +7,10 @@ import h5py
 '''Code Data Input'''
 code_columns = ['close', 'high', 'low', 'vol', 'ma10']
 code_df = pd.read_csv("data/code.csv").fillna(0)
+code_df['change'] = (code_df['close'] -
+                     code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']) * 100 / \
+                    code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']
+
 code_time_stamps = code_df['datetime']
 code_time_stamps = np.array(code_time_stamps)[:, None, None]
 code_org_df = code_df.loc[:, code_columns]
@@ -23,7 +27,7 @@ A = np.array(code_sample_df)[:, None, :]
 original_A = np.array(code_sample_df)[:, None, :]
 print(A.shape)
 # Make samples of temporal sequences of pricing data (channel)
-NPS, NFS = 80, 4  # Number of past and future samples
+NPS, NFS = 40, 4  # Number of past and future samples
 ps = PastSampler(NPS, NFS, sliding_window=False)
 B, Y = ps.transform(A)
 original_B, original_Y = ps.transform(original_A)
@@ -54,11 +58,13 @@ with h5py.File(file_name, 'w') as f:
     f.create_dataset('code_original_outputs', data=original_Y)
 
 
-
-
 '''Index Data Input'''
 index_columns = ['close', 'high', 'low', 'vol', 'ma10']
 index_df = pd.read_csv("data/index.csv").fillna(0)
+index_df['change'] = (index_df['close'] -
+                      index_df.loc[:0].append(index_df[:index_df.shape[0] - 1], ignore_index=True)['close']) * 100 / \
+                     index_df.loc[:0].append(index_df[:index_df.shape[0] - 1], ignore_index=True)['close']
+
 index_df = index_df.set_index('datetime', drop=False)
 index_df = index_df.ix[code_df['datetime'].values.tolist()]
 index_time_stamps = index_df['datetime']
@@ -84,7 +90,7 @@ original_B, original_Y = ps.transform(original_A)
 ps = PastSampler(NPS, NFS, sliding_window=True)
 validate_B, validate_Y = ps.transform(A)
 validate_count = (int(validate_B.shape[0] * 0.2)) * NFS
-validate_B_start =  validate_B.shape[0] - int(validate_B.shape[0] * 0.2)
+validate_B_start = validate_B.shape[0] - int(validate_B.shape[0] * 0.2)
 print(validate_B_start)
 
 file_name = 'data/index.h5'
@@ -98,5 +104,5 @@ with h5py.File(file_name, 'w') as f:
 
 np.save('data/index_timestamps', index_time_stamps)
 validate_timestamps_start = code_time_stamps.shape[0] - validate_count
-print(validate_count)
+# print(index_time_stamps[validate_timestamps_start:])
 np.save('data/index_validate_timestamps', index_time_stamps[validate_timestamps_start:])
