@@ -1,33 +1,54 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 from tools import PastSampler
 import h5py
 
 '''Code Data Input'''
-code_columns = ['close', 'high', 'low', 'vol', 'ma10']
+code_columns_bk = ['close', 'high', 'low', 'vol', 'ma10']
+MinMaxScaler_columns = ['close', 'high', 'low', 'vol', 'ma10', 'avg']
+code_columns = ['close', 'high', 'low', 'vol', 'ma10', 'avg', 'change']
 code_df = pd.read_csv("data/code.csv").fillna(0)
+code_df['avg'] = code_df['amount'] / code_df['vol'] / 100
+code_df['pre_close'] = code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']
 code_df['change'] = (code_df['close'] -
                      code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']) * 100 / \
                     code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']
+code_df['high_change'] = (code_df['high'] -
+                          code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']) * 100 / \
+                         code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']
+code_df['low_change'] = (code_df['close'] -
+                         code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']) * 100 / \
+                        code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['close']
+code_df['vol_change'] = (code_df['vol'] -
+                         code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['vol']) * 100 / \
+                        code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['vol']
+code_df['ma10_change'] = (code_df['ma10'] -
+                          code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['ma10']) * 100 / \
+                         code_df.loc[:0].append(code_df[:code_df.shape[0] - 1], ignore_index=True)['ma10']
+# print(np.percentile(code_df['change'].values,0))
 
 code_time_stamps = code_df['datetime']
 code_time_stamps = np.array(code_time_stamps)[:, None, None]
 code_org_df = code_df.loc[:, code_columns]
-code_org_df['avg'] = code_df['amount'] / code_df['vol'] / 100
 
 scaler = MinMaxScaler()
 code_sample_df = code_df.loc[:, code_columns]
-code_sample_df['avg'] = code_df['amount'] / code_df['vol'] / 100
-for c in code_columns:
+# code_sample_df['avg'] = code_df['amount'] / code_df['vol'] / 100
+for c in MinMaxScaler_columns:
     code_sample_df[c] = scaler.fit_transform(code_sample_df[c].values.reshape(-1, 1))
-code_sample_df['avg'] = scaler.fit_transform(code_sample_df['avg'].values.reshape(-1, 1))
+# code_sample_df['avg'] = scaler.fit_transform(code_sample_df['avg'].values.reshape(-1, 1))
+# code_sample_df['change'] = code_df['change']
+# code_sample_df['high_change'] = code_df['high_change']
+# code_sample_df['low_change'] = code_df['low_change']
+
+print(code_sample_df)
 
 A = np.array(code_sample_df)[:, None, :]
 original_A = np.array(code_sample_df)[:, None, :]
 print(A.shape)
 # Make samples of temporal sequences of pricing data (channel)
-NPS, NFS = 40, 4  # Number of past and future samples
+NPS, NFS = 10, 1  # Number of past and future samples
 ps = PastSampler(NPS, NFS, sliding_window=False)
 B, Y = ps.transform(A)
 original_B, original_Y = ps.transform(original_A)
@@ -56,7 +77,6 @@ with h5py.File(file_name, 'w') as f:
     f.create_dataset("code_original_datas", data=np.array(code_org_df))
     f.create_dataset('code_original_inputs', data=original_B)
     f.create_dataset('code_original_outputs', data=original_Y)
-
 
 '''Index Data Input'''
 index_columns = ['close', 'high', 'low', 'vol', 'ma10']
