@@ -8,7 +8,7 @@ from keras.models import Model
 from sklearn.preprocessing import MinMaxScaler, OneHotEncoder
 
 columns = ['close', 'high', 'low', 'vol', 'ma10']
-index = 0
+index = 6
 NPS, NFS = 10, 1
 
 '''Get Input Datas'''
@@ -24,7 +24,7 @@ file = open("data/model.json", 'r')
 model_config = json.load(file)
 file.close()
 model = Model.from_config(model_config)
-weight = 'data/weights/functional-05-0.00401.hdf5'
+weight = 'data/weights/functional-10-0.04118.hdf5'
 if len(sys.argv) > 1:
     weight = sys.argv[1]
 model.load_weights(weight)
@@ -35,16 +35,34 @@ predicted = model.predict([code_validate_inputs[:, :, :5]])
 predicted_inverted = []
 print(predicted)
 '''Predict Data Of MinMaxScaler'''
-scaler = MinMaxScaler()
-print(code_org_datas[:,index])
-for i in range(code_org_datas.shape[1]):
-    i = index
-    scaler.fit(code_org_datas[:, i].reshape(-1, 1))
-    predicted_inverted.append(scaler.inverse_transform(predicted.reshape(-1, 1)))
-    break
-print(np.array(predicted_inverted).shape)
-predicted_inverted = np.array(predicted_inverted).reshape(-1)
+# scaler = MinMaxScaler()
+# print(code_org_datas[:,index])
+# for i in range(code_org_datas.shape[1]):
+#     i = index
+#     scaler.fit(code_org_datas[:, i].reshape(-1, 1))
+#     predicted_inverted.append(scaler.inverse_transform(predicted.reshape(-1, 1)))
+#     break
+# print(np.array(predicted_inverted).shape)
+# predicted_inverted = np.array(predicted_inverted).reshape(-1)
 '''Predict Data Of MinMaxScaler End'''
+
+''' Predict By Change  '''
+change_lv1 = np.percentile(code_org_datas[:, -1], 30)
+change_lv2 = np.percentile(code_org_datas[:, -1], 50)
+change_lv3 = np.percentile(code_org_datas[:, -1], 70)
+
+for i in range(predicted.shape[0]):
+    max=predicted[i].max()
+    if predicted[i][0] == max:
+        predicted_inverted.append(change_lv1)
+    elif predicted[i][1] == max:
+        predicted_inverted.append(change_lv2)
+    elif predicted[i][2] == max:
+        predicted_inverted.append(change_lv3)
+    else:
+        predicted_inverted.append(10)
+predicted_inverted = np.array(predicted_inverted)
+'''Predict By Change  END'''
 
 '''Predict Data Of One Hot'''
 
@@ -72,7 +90,6 @@ predicted_inverted = np.array(predicted_inverted).reshape(-1)
 ''' Predict Data of true'''
 # predicted_inverted = np.array(predicted.reshape(-1,1))
 ''' Predict Data of true End'''
-
 
 time_stamps = np.load('data/code_validate_timestamps.npy')
 

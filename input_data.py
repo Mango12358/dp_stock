@@ -65,15 +65,13 @@ validate_timestamps_start = code_time_stamps.shape[0] - validate_count
 np.save('data/code_validate_timestamps', code_time_stamps[validate_timestamps_start:])
 validate_real = code_df.set_index('datetime', drop=False).ix[
                 code_time_stamps[validate_timestamps_start:].reshape(-1).tolist(), :]
-validate_real['avg'] = validate_real['amount'] / validate_real['vol'] / 100
-validate_columns = np.append(code_columns, 'avg')
 
 file_name = 'data/code.h5'
 with h5py.File(file_name, 'w') as f:
     f.create_dataset("code_inputs", data=B)
     f.create_dataset('code_outputs', data=Y)
     f.create_dataset('code_validate_inputs', data=validate_B[validate_B_start:])
-    f.create_dataset('code_validate_real', data=np.array(validate_real.ix[:, validate_columns]))
+    f.create_dataset('code_validate_real', data=np.array(validate_real.ix[:, code_columns]))
     f.create_dataset("code_original_datas", data=np.array(code_org_df))
     f.create_dataset('code_original_inputs', data=original_B)
     f.create_dataset('code_original_outputs', data=original_Y)
